@@ -1,0 +1,11 @@
+[package]
+name = "oovm"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+name = "oovm"
+path = "./src/main.rs"
+
+[dependencies]
+include_dir = "0.7.4"

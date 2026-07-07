@@ -1,0 +1,28 @@
+type object "Array" 0 #
+
+method "Add" 1 {
+	this
+	load 0
+	concat
+	ret
+}
+
+method "Get" 1 {
+	load 0
+	getat
+	ret
+}
+
+method "Set" 2 {
+	load 1
+	load 0
+	setat
+}
+
+method "Array" 0 {
+	this ret
+}
+
+method "Length" 0 {
+	size ret
+}
