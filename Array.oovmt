@@ -2,6 +2,7 @@ type object "Array" 0 #
 
 method "Add" 1 {
 	this
+	this
 	load 0
 	concat
 	ret
@@ -9,12 +10,12 @@ method "Add" 1 {
 
 method "Get" 1 {
 	load 0
-	getat
+	getat ref
 	ret
 }
 
 method "Set" 2 {
-	load 1
+	load 1 ref
 	load 0
 	setat
 }

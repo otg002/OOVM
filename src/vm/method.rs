@@ -61,6 +61,15 @@ impl Method {
                     i += 1;
                     0
                 }
+                opcodes::operation_2::MEM_EQUAL => {
+                    let ptr1 = stack.pop().ok_or(Error::MissingValue(format!("mem-equal")))?.to_value();
+                    let ptr2 = stack.pop().ok_or(Error::MissingValue(format!("mem-equal")))?.to_value();
+                    let mem1 = vm.mem.mem.get(&ptr1).ok_or(Error::UnknownPointer(ptr1))?.clone().2;
+                    let mem2 = vm.mem.mem.get(&ptr2).ok_or(Error::UnknownPointer(ptr2))?.clone().2;
+                    stack.push(Value((mem1 == mem2) as u32));
+                    i += 1;
+                    0
+                }
                 opcodes::operation_2::SEND_DYNAMIC => {
                     let msg = stack.pop().ok_or(Error::MissingValue(String::from("send.dyn@message_to_send")))?.to_value();
                     let ptr = stack.pop().ok_or(Error::MissingValue(String::from("send.dyn@object_pointer")))?.to_value();
@@ -172,7 +181,7 @@ impl Method {
                         .map_err(
                             |err| Error::ConstInterpretationError(err.to_string())
                         )?;
-                    let type_ = vm.types.get(&type_name).ok_or(Error::TypeNotFound(type_name.to_string()))?;
+                    vm.types.get(&type_name).ok_or(Error::TypeNotFound(type_name.to_string()))?;
                     let ptr: Data = Pointer(vm.mem.alloc(type_name.clone(), vm.types.get(&type_name).ok_or(Error::TypeNotFound(type_name))?.clone()));
                     stack.push(ptr);
                     i += 5;
@@ -284,6 +293,23 @@ impl Method {
                     i += 1;
                     0
                 }
+                opcodes::mem::APPEND => {
+                    let val = stack.pop().ok_or(Error::MissingValue(String::from("append")))?;
+                    let ptr = stack.pop().ok_or(Error::MissingValue(String::from("append")))?.to_value();
+                    let mem = vm.mem.mem.get_mut(&ptr).ok_or(Error::UnknownPointer(ptr))?;
+                    let mut fields = mem.2.clone();
+                    match &mut fields {
+                        memory::Segment::Fields(data) => {
+                            data.push(val);
+                        }
+                        memory::Segment::Bytes(data) => {
+                            data.extend(val.to_bytes())
+                        }
+                    }
+                    mem.2 = fields;
+                    i += 1;
+                    0
+                }
                 opcodes::io::ECHO => {
                     let str_ptr = stack.pop().ok_or(Error::MissingValue(String::from("echo")))?.to_value();
                     let (_, type_name, bytes) = vm.mem.mem.get(&str_ptr).ok_or(Error::UnknownPointer(str_ptr))?;
@@ -302,6 +328,8 @@ impl Method {
                 opcodes::io::INPUT => {
                     let mut str = String::new();
                     std::io::stdin().read_line(&mut str).map_err(|_| Error::IOError(String::from("Failed to read line")))?;
+                    let str = str.replace("\n","");
+                    let str = str.replace("\r","");
                     let str = str.as_bytes();
                     let str_type_name = String::from("String");
                     let ptr = vm.mem.alloc_blank(str_type_name);
@@ -334,7 +362,7 @@ impl Method {
                         values.push(stack.pop().ok_or(Error::MissingValue(String::from("marr")))?);
                     }
                     values.reverse();
-                    let ptr = vm.mem.alloc_sized_object(String::from("Array"), length);
+                    let ptr = vm.mem.alloc_blank(String::from("Array"));
                     vm.mem.write_all(ptr, memory::Segment::Fields(values))?;
                     stack.push(Data::Pointer(ptr));
                     i += 5;

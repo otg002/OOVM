@@ -35,6 +35,7 @@ fn get_opcodes() -> HashMap<String, u8> {
         "setat": 0xA9,
         "size": 0xAA,
         "explode": 0xAB,
+        "append": 0xAC,
 
         "echo": 0xB0,
         "input": 0xB1,

@@ -28,7 +28,6 @@ pub enum Error {
 type Result<T> = std::result::Result<T, Error>;
 
 type TypeName = String;
-type Version = usize;
 
 #[derive(Debug, Clone)]
 struct Type {
@@ -44,7 +43,7 @@ use memory::*;
 
 pub mod opcodes;
 
-#[derive(Clone, Debug, Copy)]
+#[derive(Clone, Debug, Copy, PartialEq)]
 enum Data {
     Value(u32),
     Pointer(u32),
@@ -86,7 +85,6 @@ use method::*;
 pub struct Vm {
     types: HashMap<String,Type>,
     mem: Memory,
-    type_cache: HashMap<TypeName, Rc<TypeName>>,
     debug: u8,
 }
 
@@ -199,7 +197,6 @@ pub fn main(paths: Vec<String>, debug: u8) -> Result<u32> {
     let mut vm = Vm {
         types: HashMap::new(),
         mem: Memory::new(),
-        type_cache: HashMap::new(),
         debug,
     };
     load_type(&mut vm, VM_DIR.get_file("builtin-types/oovm.magic.type").unwrap().contents().to_vec())?;

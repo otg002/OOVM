@@ -3,7 +3,7 @@ use std::rc::Rc;
 
 use super::*;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Segment {
     Bytes(Vec<u8>),
     Fields(Vec<Data>),
@@ -43,36 +43,6 @@ impl Memory {
         self.mem.insert(ptr, (1, type_name.into(), value));
         ptr
     }
-    pub fn alloc_sized_object(&mut self, type_name: TypeName, size: usize) -> u32 {
-        let ptr = self.next_ptr;
-        self.next_ptr += 1;
-        while self.mem.contains_key(&self.next_ptr) {
-            self.next_ptr += 1;
-        }
-        let value: Segment = {
-            let mut fields: Vec<Data> = Vec::with_capacity(size);
-            for _ in 0..size {
-                fields.push(Data::Value(0))
-            }
-            Segment::Fields(fields)
-        };
-        self.mem.insert(ptr, (1, type_name.into(), value));
-        ptr
-    }
-    pub fn alloc_array(&mut self, size: usize, type_name: TypeName) -> u32 {
-        let ptr = self.next_ptr;
-        self.next_ptr += 1;
-        while self.mem.contains_key(&self.next_ptr) {
-            self.next_ptr += 1;
-        }
-        let mut bytes: Vec<u8> = Vec::with_capacity(size);
-        for _ in 0..size {
-            bytes.push(0);
-        }
-        let seg = Segment::Bytes(bytes);
-        self.mem.insert(ptr, (1, type_name.into(), seg));
-        ptr
-    }
     pub fn alloc_blank(&mut self, type_name: TypeName) -> u32 {
         let ptr = self.next_ptr;
         self.next_ptr += 1;
@@ -108,20 +78,19 @@ impl Memory {
         let type_ = vm.types.get(&type_name.to_string()).ok_or(Error::TypeNotFound(type_name.to_string()));
         Ok(type_?)
     }
-    pub fn send(&self, vm: &mut Vm, ptr: u32, msg: String, args: Vec<Data>) -> Result<Option<Data>> {
-        let type_ = self.get_type(vm, ptr)?;
-        let method = type_.messages.get(&msg).ok_or(Error::MessageNotFound(msg))?.clone();
-        method.call(ptr, vm, args)
-    }
     pub fn write_data(&mut self, ptr: u32, val: Data, index: usize) -> Result<()> {
         let mem: &mut Segment = &mut self.mem.get_mut(&ptr).ok_or(Error::UnknownPointer(ptr))?.2;
         match *mem {
             Segment::Fields(ref mut fields) => {
-                fields[index] = val;
+                let len = fields.len();
+                let field = fields.get_mut(index).ok_or(Error::IndexOutOfBounds(len, index))?;
+                *field = val;
             }
             Segment::Bytes(ref mut bytes) => {
+                let len = bytes.len();
                 for (i, byte) in val.to_bytes().iter().enumerate() {
-                    bytes[i + index] = *byte;
+                    let b = bytes.get_mut(i + index).ok_or(Error::IndexOutOfBounds(len, index))?;
+                    *b = *byte;
                 }
             }
         }

@@ -54,7 +54,7 @@ fn make_file(path: String) -> Result<Node> {
 pub fn make(paths: Vec<String>, from_dir: &str, dir: &str) -> std::result::Result<Vec<String>, Error> {
     let mut nodes: Vec<Node> = Vec::new();
     for path in paths.clone() {
-        nodes.push(make_file(from_dir.to_string() + if from_dir.len() > 0 {"/"} else {""} + path.as_str())?);
+        nodes.push(make_file(from_dir.to_string() + path.as_str())?);
     }
     let types = build::build(nodes)?;
     let mut files: Vec<(String, Rc<[u8]>)> = Vec::new();
@@ -74,26 +74,26 @@ pub fn make(paths: Vec<String>, from_dir: &str, dir: &str) -> std::result::Resul
                     )
             );
         }
-        let path = dir.to_string() + "/"
-            + (
-                (name
-                    .strip_suffix(".oovmm")
-                    .unwrap_or(name.as_str())
-                    .strip_suffix(".oovmt")
-                    .unwrap_or(name
-                        .strip_suffix(".oovmm")
-                        .unwrap_or(name.as_str()))
-                    .to_string()
-                + ".")
-                .replace("<", "oovm.")
-                .replace(">", ".magic")
-                .replace("..", ".")
-                + (
-                if !is_mod { String::from("type") }
-                else { (type_mods.get(&name).unwrap()).to_string() + ".mod" }
-            )
-                .as_str()
+        let path = (name
+            .replace("\\", "/")
+            .strip_suffix(".oovmm")
+            .unwrap_or(name.as_str())
+            .strip_suffix(".oovmt")
+            .unwrap_or(name
+                .strip_suffix(".oovmm")
+                .unwrap_or(name.as_str()))
+            .to_string()
+        + ".")
+        .replace("<", "oovm.")
+        .replace(">", ".magic")
+        .replace("..", ".")
+        + (
+            if !is_mod { String::from("type") }
+            else { (type_mods.get(&name).unwrap()).to_string() + ".mod" }
         ).as_str();
+        let path = path.replace("\\","/");
+        let path = *path.split('/').collect::<Vec<&str>>().last().unwrap();
+        let path = dir.to_string() + path;
         written_paths.push(path.clone());
         std::fs::write(path, file)
             .map_err(
@@ -114,6 +114,10 @@ fn main() -> Result<()> {
     if if args.len() > 1 {args[1] == "make"} else {false} {
         let paths: Vec<String> = args[2..].to_vec();
         make(paths, ".", ".")?;
+    }
+    if if args.len() > 1 {args[1] == "make-into"} else {false} {
+        let paths: Vec<String> = args[3..].to_vec();
+        make(paths, "", args[2].as_str())?;
     }
     else if if args.len() > 1 {args[1] == "run"} else {false} {
         exec(args[2..].to_vec(), 0)?;

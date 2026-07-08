@@ -68,6 +68,7 @@ pub mod mem {
     pub const SETAT: u8 = 0xA9;
     pub const SIZE: u8 = 0xAA;
     pub const EXPLODE: u8 = 0xAB;
+    pub const APPEND: u8 = 0xAC;
 }
 /// In/Out Instructions such as **`echo`** and **`input`**, all of the form *`0xB`***`N`** where **`N`** is the specific instruction number
 pub mod io {
