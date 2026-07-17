@@ -36,15 +36,20 @@ fn get_opcodes() -> HashMap<String, u8> {
         "size": 0xAA,
         "explode": 0xAB,
         "append": 0xAC,
+        "typeof": 0xAD,
 
         "echo": 0xB0,
         "input": 0xB1,
+        "rfile": 0xB2,
+        "wfile": 0xB3,
+        "dfile": 0xB4,
 
         "mint": 0xC0,
         "mstr": 0xC1,
         "mfloat": 0xC2,
         "lstr": 0xC3,
         "marr": 0xC4,
+        "chars": 0xC5,
 
         "send": 0xD0,
         "add.int": 0xD1,
@@ -69,6 +74,7 @@ fn get_opcodes() -> HashMap<String, u8> {
         "or": 0xE3,
         "xor": 0xE4,
         "not": 0xE5,
+        "not.bool": 0xE6,
 
         "local": 0xF0,
         "load": 0xF1,

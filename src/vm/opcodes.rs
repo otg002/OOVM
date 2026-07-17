@@ -69,12 +69,15 @@ pub mod mem {
     pub const SIZE: u8 = 0xAA;
     pub const EXPLODE: u8 = 0xAB;
     pub const APPEND: u8 = 0xAC;
+    pub const TYPEOF: u8 = 0xAD;
 }
 /// In/Out Instructions such as **`echo`** and **`input`**, all of the form *`0xB`***`N`** where **`N`** is the specific instruction number
 pub mod io {
-    /// # **`strptr:4` → `echo`**
+    /// # **`str:ptr` → `echo`**
     ///
-    /// Prints the contents of a string pointer. If the string pointer points to any other type, the program will crash with a Exception::TypeError(typeof($strptr)).
+    /// Prints the contents of a string pointer.
+    /// If the string pointer points to any other type,
+    /// the program will crash with a Exception::TypeError(typeof($str)).
     /// ```
     /// lstr 0
     /// echo
@@ -83,13 +86,28 @@ pub mod io {
     /// (0xB0:176)
     pub const ECHO: u8 = 0xB0;
     pub const INPUT: u8 = 0xB1;
+    pub const READ_FILE: u8 = 0xB2;
+    /// # **`str:ptr`, `bytearr` → `wfile`**
+    ///
+    /// Writes the bytes in the byte string `$bytearr` to the file with the path in `$str` at index `$idx`.
+    /// If a String is passed as `$bytearr`, it will write the exact bytes of the string to the file.
+    /// If instead a character array (or a regular integer array) is passed as `$bytearr`, the values will be written
+    /// in utf-32, not compressed into utf-8.
+    /// ```
+    /// lstr "file.txt"
+    /// lstr "Hello, World!"
+    /// wfile
+    /// ```
+    /// Writes "`Hello, World!`" to `file.txt`.
+    pub const WRITE_FILE: u8 = 0xB3;
+    pub const DELETE_FILE: u8 = 0xB4;
 }
 pub mod primitive {
     pub const MINT: u8 = 0xC0;
     pub const MSTR: u8 = 0xC1;
-    pub const MFLOAT: u8 = 0xC2;
     pub const LSTR: u8 = 0xC3;
     pub const MARR: u8 = 0xC4;
+    pub const CHARS: u8 = 0xC5;
 }
 pub mod operation {
     pub const SEND: u8 = 0xD0;
@@ -116,6 +134,7 @@ pub mod bitwise {
     pub const OR: u8 = 0xE3;
     pub const XOR: u8 = 0xE4;
     pub const NOT: u8 = 0xE5;
+    pub const NOT_BOOL: u8 = 0xE6;
 }
 pub mod var {
     pub const LOCAL: u8 = 0xF0;

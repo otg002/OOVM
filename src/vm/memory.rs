@@ -58,9 +58,12 @@ impl Memory {
     }
     pub fn free(&mut self, ptr: u32) -> Result<()> {
         let ref_count: &mut usize = &mut self.mem.get_mut(&ptr).ok_or(Error::UnknownPointer(ptr))?.0;
+        if *ref_count == 0 {
+            return Ok(());
+        }
         *ref_count -= 1;
         if *ref_count == 0 {
-            match self.mem.remove(&ptr).ok_or(Error::UnknownPointer(ptr))?.2 {
+            match self.mem.get(&ptr).ok_or(Error::UnknownPointer(ptr))?.2.clone() {
                 Segment::Fields(fields) => {
                     for field in fields {
                         if let Data::Pointer(field) = field {
@@ -70,13 +73,14 @@ impl Memory {
                 }
                 Segment::Bytes(_) => {}
             }
+            self.mem.remove(&ptr);
         }
         Ok(())
     }
-    pub fn get_type<'a>(&self, vm: &'a Vm, ptr: u32) -> Result<&'a Type> {
+    pub fn get_type<'a>(&self, vm: &'a Vm, ptr: u32) -> Result<(&'a Type, TypeName)> {
         let type_name = self.mem.get(&ptr).ok_or(Error::UnknownPointer(ptr))?.1.clone();
         let type_ = vm.types.get(&type_name.to_string()).ok_or(Error::TypeNotFound(type_name.to_string()));
-        Ok(type_?)
+        Ok((type_?, type_name.to_string()))
     }
     pub fn write_data(&mut self, ptr: u32, val: Data, index: usize) -> Result<()> {
         let mem: &mut Segment = &mut self.mem.get_mut(&ptr).ok_or(Error::UnknownPointer(ptr))?.2;

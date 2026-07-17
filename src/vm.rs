@@ -13,7 +13,7 @@ pub enum Error {
     UnknownPointer(u32),
     MissingValue(String),
     ConstInterpretationError(String),
-    MessageNotFound(String),
+    MessageNotFound(TypeName, String),
     MissingLocal(usize),
     /// (found, expected)
     TypeError(String, String),
@@ -176,6 +176,7 @@ fn load_type(vm: &mut Vm, file: Vec<u8>) -> Result<()> {
         let consts: &mut Vec<_> = &mut mod_type.constants;
         consts.push(imut_const_pool.into());
         mod_type.size += size as usize;
+        mod_type.field_table.push(mod_type.size);
     }
     else {
         let loaded: Type = Type {
@@ -211,15 +212,13 @@ pub fn main(paths: Vec<String>, debug: u8) -> Result<u32> {
     else {
         vm.mem.alloc(String::from("<>"), vm.types.get(&String::from("<>")).unwrap().clone());
         //println!("types: {:#?}", vm.types);
-        let magic = &vm.types[&String::from("<>")];
-        let main = magic.messages.get(&String::from("main")).ok_or(Error::MessageNotFound(String::from("main")))?.clone();
         if debug > 0 {
             println!("Starting...");
         }
-        let result = main.call(0, &mut vm, Vec::new())?;
+        let result = method::exec(&mut vm)?;
         if debug > 0 {
             println!("Memory: {:#?}", vm.mem);
         }
-        Ok(result.unwrap_or(Value(0)).to_value())
+        Ok(result)
     }
 }
